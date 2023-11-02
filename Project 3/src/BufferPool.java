@@ -8,9 +8,7 @@ import java.nio.ByteBuffer;
  * @version {October 2023}
  */
 public class BufferPool {
-    /**
-     * Compare keys and swap two records
-     */
+
     private RandomAccessFile file;
     private Buffer[] bufferPool;
     private int fileLength;
@@ -36,20 +34,17 @@ public class BufferPool {
         file = randFile;
         maxBuffers = numbBuffers;
         bufferPool = new Buffer[numbBuffers];
-//        for (int i = 0; i < numbBuffers; i++) {
-//            bufferPool[i] = new Buffer();
-//        }
+// for (int i = 0; i < numbBuffers; i++) {
+// bufferPool[i] = new Buffer();
+// }
         fileLength = (int)randFile.length();
-        linkedList = new LinkedList<Buffer>(); 
+        linkedList = new LinkedList<Buffer>();
         numRecords = fileLength / 4;
         numBuffers = 0;
 
     }
 
-
-    
-//        
-    
+//
 
 
     /**
@@ -69,33 +64,32 @@ public class BufferPool {
         int blockID = (pos * RECORD_SIZE) / 4096;
         int keySpot = (pos * RECORD_SIZE) % 4096;
         Buffer buffer = null;
-        for(int i = 0; i < linkedList.getCount(); i++) {
-            //if present
-            if(linkedList.searchByIndex(i).item.getBlockID() == blockID) {
-                buffer = linkedList.searchByIndex(i).item;
+        for (int i = 0; i < linkedList.getCount(); i++) {
+            // if present
+            if (linkedList.searchByIndex(i).getItem().getBlockID() == blockID) {
+                buffer = linkedList.searchByIndex(i).getItem();
                 linkedList.removeSpecific(i);
                 linkedList.insertHead(buffer);
                 return buffer.bufferGetBytes(keySpot, size);
             }
         }
-        //if full & not in linked list
-        if(maxBuffers == linkedList.getCount()) {
-            if(linkedList.searchByIndex(maxBuffers -1).item.isDirty()) {
+        // if full & not in linked list
+        if (maxBuffers == linkedList.getCount()) {
+            if (linkedList.searchByIndex(maxBuffers - 1).getItem().isDirty()) {
                 write();
                 buffer = read(blockID);
-            } else {
+            }
+            else {
                 buffer = read(blockID);
             }
             linkedList.removeSpecific(maxBuffers - 1);
             linkedList.insertHead(buffer);
-            return buffer.bufferGetBytes(keySpot,size);
+            return buffer.bufferGetBytes(keySpot, size);
         }
-        //if not full and not in linked list
+        // if not full and not in linked list
         buffer = read(blockID);
         linkedList.insertHead(buffer);
-        
-        
-        
+
         return buffer.bufferGetBytes(keySpot, size);
     }
 
@@ -142,12 +136,13 @@ public class BufferPool {
      * Flushes the buffer pool by writing all dirty buffers back to the file
      * 
      * @throws IOException
+     *             exception on bad file
      */
     public void flush() throws IOException {
-        
-        for(int i =0; i< linkedList.getCount()-1; i++) {
-            if(linkedList.searchByIndex(i).item.isDirty()) {                
-                Buffer currentHead = linkedList.getHead().item;
+        int count = linkedList.getCount();
+        for (int i = 0; i < count; i++) {
+            if (linkedList.searchByIndex(0).getItem().isDirty()) {
+                Buffer currentHead = linkedList.getHead().getItem();
                 byte[] bytes = currentHead.getBlockBytes();
                 int id = currentHead.getBlockID();
                 currentHead.setDirtyBuffer(false);
@@ -161,18 +156,6 @@ public class BufferPool {
 
 
     /**
-     * Alerts you to the status of the buffer pool
-     * 
-     * @param bp
-     *            buffer pool array to be checked
-     * @return a boolean value of true if full, false otherwise
-     */
-    public boolean isFull(Buffer[] bp) {
-        return numBuffers == bp.length;
-    }
-
-
-    /**
      * Gets the file length of input
      * 
      * @return file length of input in bytes
@@ -181,99 +164,113 @@ public class BufferPool {
         return fileLength;
     }
 
+// /**
+// * Shifts all the values in this array up one towards the highest index,
+// * leaves position [0] to be filled with a new value.
+// *
+// * @param bp
+// * array of buffers being changeds
+// */
+// public void shiftUp(Buffer[] bp) {
+// // for the length of the buffer pool overwrite the contents
+// for (int i = bp.length - 1; i > 0; i--) {
+// bp[i] = bp[i - 1];
+// }
+// }
 
-    /**
-     * Gets the number of records
-     * 
-     * @return number of records in the whole file
-     */
-    public int getNumRecords() {
-        return numRecords;
-    }
-
-
-//    /**
-//     * Shifts all the values in this array up one towards the highest index,
-//     * leaves position [0] to be filled with a new value.
-//     * 
-//     * @param bp
-//     *            array of buffers being changeds
-//     */
-//    public void shiftUp(Buffer[] bp) {
-//        // for the length of the buffer pool overwrite the contents
-//        for (int i = bp.length - 1; i > 0; i--) {
-//            bp[i] = bp[i - 1];
-//        }
-//    }
 
     /**
      * Swap method switches two records
-     * @param array1 - record 1
-     * @param position1 - position of record 1
-     * @param array2 - record 2
-     * @param position2 - position of record 2
-     * @param pivotSwap - lets us know if this is a pivot we're swapping
-     * @throws IOException if file not found
+     * 
+     * @param array1
+     *            - record 1
+     * @param position1
+     *            - position of record 1
+     * @param array2
+     *            - record 2
+     * @param position2
+     *            - position of record 2
+     * @param pivotSwap
+     *            - lets us know if this is a pivot we're swapping
+     * @throws IOException
+     *             if file not found
      */
     public void swap(
-        byte[] array1, int position1, byte[] array2, int position2,
-boolean pivotSwap) throws IOException {
-        
+        byte[] array1,
+        int position1,
+        byte[] array2,
+        int position2,
+        boolean pivotSwap)
+        throws IOException {
+
         int block1id = (position1 * RECORD_SIZE) / 4096;
         int positionInBlock = (position1 * RECORD_SIZE) % 4096;
 
         int block2id = (position2 * RECORD_SIZE) / 4096;
         int positionInBlock2 = (position2 * RECORD_SIZE) % 4096;
 
-       boolean found = false;
-        for(int i = 0; i < linkedList.getCount(); i++) {
-            //if present
-            if(linkedList.searchByIndex(i).item.getBlockID() == block1id) {
-                
-                System.arraycopy(array2, 0, linkedList.searchByIndex(i).item.getBlockBytes(), positionInBlock, RECORD_SIZE);
-                linkedList.searchByIndex(i).item.setDirtyBuffer(true);
+        boolean found = false;
+        for (int i = 0; i < linkedList.getCount(); i++) {
+            // if present
+            if (linkedList.searchByIndex(i).getItem().getBlockID() == block1id) {
+
+                System.arraycopy(array2, 0, linkedList.searchByIndex(i).getItem()
+                    .getBlockBytes(), positionInBlock, RECORD_SIZE);
+                linkedList.searchByIndex(i).getItem().setDirtyBuffer(true);
                 found = true;
                 break;
             }
         }
-        if(!found) {
+        if (!found) {
             loadBlock(block1id);
-            System.arraycopy(array2, 0, linkedList.searchByIndex(0).item.getBlockBytes(), positionInBlock, RECORD_SIZE);
-            linkedList.searchByIndex(0).item.setDirtyBuffer(true);
+            System.arraycopy(array2, 0, linkedList.searchByIndex(0).getItem()
+                .getBlockBytes(), positionInBlock, RECORD_SIZE);
+            linkedList.searchByIndex(0).getItem().setDirtyBuffer(true);
         }
         found = false;
-        for(int i = 0; i < linkedList.getCount(); i++) {
-            //if present
-            if(linkedList.searchByIndex(i).item.getBlockID() == block2id) {
-                System.arraycopy(array1, 0, linkedList.searchByIndex(i).item.getBlockBytes(), positionInBlock2, RECORD_SIZE);
-                linkedList.searchByIndex(i).item.setDirtyBuffer(true);
+        for (int i = 0; i < linkedList.getCount(); i++) {
+            // if present
+            if (linkedList.searchByIndex(i).getItem().getBlockID() == block2id) {
+                System.arraycopy(array1, 0, linkedList.searchByIndex(i).getItem()
+                    .getBlockBytes(), positionInBlock2, RECORD_SIZE);
+                linkedList.searchByIndex(i).getItem().setDirtyBuffer(true);
                 found = true;
                 break;
             }
         }
-        if(!found) {
+        if (!found) {
             loadBlock(block2id);
-            System.arraycopy(array1, 0, linkedList.searchByIndex(0).item.getBlockBytes(), positionInBlock2, RECORD_SIZE);
-            linkedList.searchByIndex(0).item.setDirtyBuffer(true);
+            System.arraycopy(array1, 0, linkedList.searchByIndex(0).getItem()
+                .getBlockBytes(), positionInBlock2, RECORD_SIZE);
+            linkedList.searchByIndex(0).getItem().setDirtyBuffer(true);
         }
-        
-        
-     
+
     }
-    
+
+
+    /**
+     * Load block helper method for swapping if something isn't already in the
+     * buffer pool
+     * 
+     * @param targetID
+     *            - target ID
+     * @throws IOException
+     *             - throws if file not found
+     */
     private void loadBlock(int targetID) throws IOException {
         Buffer buffer = new Buffer();
-        if(maxBuffers == linkedList.getCount()) {
-            if(linkedList.searchByIndex(maxBuffers -1).item.isDirty()) {
+        if (maxBuffers == linkedList.getCount()) {
+            if (linkedList.searchByIndex(maxBuffers - 1).getItem().isDirty()) {
                 write();
                 buffer = read(targetID);
-            } else {
+            }
+            else {
                 buffer = read(targetID);
             }
             linkedList.removeSpecific(maxBuffers - 1);
             linkedList.insertHead(buffer);
         }
-        //if not full and not in linked list
+        // if not full and not in linked list
         buffer = read(targetID);
         linkedList.insertHead(buffer);
     }
@@ -286,7 +283,7 @@ boolean pivotSwap) throws IOException {
      * @return least recently used buffer in array
      */
     private Buffer getLeastRecentlyUsed() {
-        lru = linkedList.searchByIndex(maxBuffers-1).item;
+        lru = linkedList.searchByIndex(maxBuffers - 1).getItem();
         return lru;
     }
 
@@ -323,22 +320,6 @@ boolean pivotSwap) throws IOException {
             System.arraycopy(buffer, spot, temp, 0, size);
             return temp;
 
-        }
-
-
-        /**
-         * Sets the bytes
-         * 
-         * @param newBytes
-         *            - new bytes
-         * @param position
-         *            - position of bytes in the block
-         * @param size
-         *            - amount of bytes to copy
-         */
-        public void setBytes(byte[] newBytes, int position, int size) {
-
-            System.arraycopy(newBytes, 0, buffer, position, size);
         }
 
 

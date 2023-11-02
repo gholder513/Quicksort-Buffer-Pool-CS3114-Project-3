@@ -21,9 +21,6 @@ public class QuicksortSpecialized {
     }
 
 
-    
-
-
     /**
      * Quicksort algorithim that sorts the array via splitting your data into
      * two sets with the help of a partion method and a pivot
@@ -49,14 +46,14 @@ public class QuicksortSpecialized {
         byte[] rightBytes = bp.getBytes(rightIndex, RECORDSIZE);
 
         // Stick pivot at end
-        bp.swap(pivotBytes, pivotIndex, rightBytes,rightIndex, true);
+        bp.swap(pivotBytes, pivotIndex, rightBytes, rightIndex, true);
 
         // k will be the first position in the right subarray
 
         int k = partition(bp, leftIndex, rightIndex - 1, pivotValue);
         byte[] kBytes = bp.getBytes(k, RECORDSIZE);
-        rightBytes = bp.getBytes(k, RECORDSIZE);  
-        
+        rightBytes = bp.getBytes(k, RECORDSIZE);
+
         bp.swap(kBytes, k, rightBytes, rightIndex, true);
 
         if ((k - leftIndex) > 1) {

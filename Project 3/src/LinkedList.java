@@ -214,7 +214,7 @@ public class LinkedList<E> {
         /**
          * Data item in the node
          */
-        T item;
+        private T item;
 
         /**
          * Pointer to the next node
@@ -229,6 +229,14 @@ public class LinkedList<E> {
          */
         public Node(T item) {
             this.item = item;
+        }
+        
+        /**
+         * Gets this buffer
+         * @return - item buffer
+         */
+        public T getItem() {
+            return item;
         }
 
     }
